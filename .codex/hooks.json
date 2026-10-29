@@ -1,0 +1,18 @@
+{
+  "description": "Re-inject AI_USAGE.md before each user prompt (no write or execution blocking).",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .codex/hooks/ai_use_hook.py",
+            "statusMessage": "Loading repository AI-use policy",
+            "timeout": 10,
+            "additionalContextLimit": 6000
+          }
+        ]
+      }
+    ]
+  }
+}
