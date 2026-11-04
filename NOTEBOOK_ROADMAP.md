@@ -28,7 +28,6 @@ All notebooks live in `notebooks/`. Notebook numbers indicate working order; the
 | `07_stronger_rul_models.ipynb` | 4 | Do Random Forest and gradient boosting improve validation performance? |
 | `08_rul_final_evaluation.ipynb` | 5 | How does the selected regressor generalize, and where does it fail? |
 | `09_classification_final_evaluation.ipynb` | 5 | How does the selected classifier balance missed alerts and false alarms? |
-| `10_sequence_model_extension.ipynb` — optional | 6 | Does a sequence model offer a meaningful improvement over the established models? |
 
 ## 01 — Understand the data
 
@@ -170,11 +169,9 @@ All notebooks live in `notebooks/`. Notebook numbers indicate working order; the
 
 **Outcome:** final classification results and interpretation, kept separate from the regression metrics.
 
-## 10 — Optional sequence model
+## Scope decision — sequence models excluded
 
-Start only after the tabular baselines and their evaluation are stable.
-
-Use this notebook for an LSTM or another sequence regressor: window construction, causal inputs, engine-separated evaluation, and comparison with the established regression baselines. Develop using fitting/validation engines. If official test results have already influenced this extension, disclose that exposure rather than presenting another test evaluation as untouched.
+The maintainer has decided not to pursue LSTM or other sequence neural networks in this project. No notebook 10 is planned. The modeling study focuses on tabular models with past-only engineered features, followed by final evaluation and the prediction API. Codex recorded this scope decision at the maintainer's request.
 
 ## Small migration from the current notebooks
 
@@ -202,3 +199,20 @@ This is organizational work for the maintainer to carry out; editing this roadma
 ## Work outside notebooks
 
 Phase 0 setup and acquisition instructions belong in the README and dependency files. The final README should explain the problem, simulated data, reproduction steps, protocols, result tables, figures, and limitations, with truthful AI disclosure. Phase 6 delivery can be an author-written inference CLI, API, or app in `src/`, supported by author-owned checks in `tests/`; it does not require another notebook. FD002–FD004 remain optional until FD001 is reproducible.
+
+## Planned final delivery — file-upload prediction API
+
+At the maintainer's explicit request, the chosen practical delivery is a functioning inference API, implemented by the maintainer after the modeling study. This is now a planned project deliverable; LSTM and other sequence neural networks are excluded from scope, while other extensions remain optional. Codex added this planning section as documentation assistance.
+
+**User flow:** upload a tabular file containing engine sensor histories → validate the input → calculate the selected past-only features → apply saved preprocessing and a trained model → return predictions.
+
+- Define a documented input schema and supported file format, starting with CSV. Require engine ID, cycle, operating settings, and the sensor channels needed by the selected method; uploaded files must not need RUL or alert labels.
+- Require the history length needed by the selected past-only features. Check missing columns, invalid values, duplicate engine/cycle pairs, ordering, and insufficient history, with clear errors or an explicitly documented handling rule.
+- Select the model and feature configuration using a declared validation metric and consistent evaluation protocol. Freeze these choices before official test evaluation; do not select the winner using official test scores.
+- Document the final refitting procedure, normally fitting the selected preprocessing and model on all official training engines, and save versioned artifacts. The API loads these artifacts and performs inference; uploads do not trigger retraining.
+- Reuse the same author-written feature and preprocessing definitions for training and serving. Keep windows within each engine and use only readings available by the prediction cycle.
+- Initially return one prediction per engine at its latest uploaded cycle: engine ID, cycle, predicted RUL in cycles, and model version. If alerts are included, state whether they come from a separately evaluated classifier or a documented threshold on predicted RUL; do not present the latter as a classifier probability.
+- Validate that API predictions match offline predictions for identical histories. Include author-owned checks for valid uploads, malformed data, insufficient history, and multiple engines, plus setup instructions and example requests/responses.
+- Present the deliverable as an end-to-end predictive-maintenance prototype validated on simulated FD001 data. Arbitrary company spreadsheets or unrelated equipment are outside its validated scope; a commercial operational system would need equipment-specific data, validation, integration, monitoring, and maintenance of the deployed model.
+
+**Completion checkpoint:** a user can start the API from the documented instructions, upload a compatible engine-history file, and receive reproducible predictions without running training notebooks or manually engineering features.
