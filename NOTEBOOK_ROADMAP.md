@@ -4,6 +4,16 @@ This roadmap describes the intended notebook structure and learning sequence. Cr
 
 [AGENTS.md](AGENTS.md) remains the project roadmap, and [AI_USAGE.md](AI_USAGE.md) governs AI assistance. This organizational document was drafted by Codex at the maintainer's explicit request. It does not change either policy.
 
+## Working approach — learning record and final deliverable
+
+The maintainer explicitly wants the exploratory notebooks to document their learning process. They may contain intermediate approaches, experiments, debugging, and informal notes. Polishing their appearance or rewriting them into a uniform presentation is not a prerequisite for continuing the project, and they are not the final presentation of the study. Preserve meaningful unsuccessful experiments and clearly distinguish corrected mistakes or invalid comparisons from usable results.
+
+The findings will instead be consolidated into **one final RUL notebook**, using the planned `08_rul_final_evaluation.ipynb`. This will be the carefully structured, reproducible presentation of the strongest defensible approach found during development: problem framing, selected features, model comparison evidence, final training procedure, held-out evaluation, limitations, and an inference example. Select the approach using fitting/validation engines and freeze it before official testing. The separate classification task remains documented with its own targets and metrics.
+
+The complete practical deliverable also includes the **file-upload prediction API** described below. A user supplies a compatible engine-history dataset, and the service performs feature engineering and inference automatically, returning estimated remaining useful life for each engine. The final notebook explains and demonstrates the method; reusable author-written inference code and saved artifacts support the API without requiring notebooks to run for each request.
+
+This working approach was recorded by Codex at the maintainer's explicit request. The maintainer implements and verifies the methodology, project code, results, and conclusions.
+
 ## Where we are now
 
 - `01_understanding_the_data.ipynb` exists and contains the initial exploration.
@@ -26,7 +36,7 @@ All notebooks live in `notebooks/`. Notebook numbers indicate working order; the
 | `05_simple_rul_regression.ipynb` | 3 | Can simple regressors estimate remaining cycles better than the constant baseline? |
 | `06_past_only_features.ipynb` | 4 | How can we summarize sensor history without looking into the future? |
 | `07_stronger_rul_models.ipynb` | 4 | Do Random Forest and gradient boosting improve validation performance? |
-| `08_rul_final_evaluation.ipynb` | 5 | How does the selected regressor generalize, and where does it fail? |
+| `08_rul_final_evaluation.ipynb` | 5 | Final consolidated RUL study: what approach was selected, how does it generalize, and how does it support inference? |
 | `09_classification_final_evaluation.ipynb` | 5 | How does the selected classifier balance missed alerts and false alarms? |
 
 ## 01 — Understand the data
@@ -141,19 +151,22 @@ All notebooks live in `notebooks/`. Notebook numbers indicate working order; the
 
 **Outcome:** a selected regressor with documented validation evidence. Stronger classification models are an optional later extension, not a requirement for this notebook.
 
-## 08 — Final RUL evaluation
+## 08 — Final consolidated RUL notebook and evaluation
 
 **Inputs:** the frozen regression configuration, validation results, and official test histories/labels.
 
 **Contents:**
 
+- Consolidate the findings from the learning notebooks into one clear, reproducible RUL study. Present the problem, simulated-data scope, data acquisition/setup, target, engine split, and prediction unit.
+- Explain the selected features and their history requirements, the validation evidence supporting the chosen model, and relevant baseline comparisons. Retain references to meaningful unsuccessful experiments without reproducing every exploratory step.
 - State the final fitting procedure, including whether the chosen configuration is refitted on all official training engines.
 - Evaluate the frozen model and relevant baselines on the same final recorded test cycles.
 - Report MAE/RMSE, errors by RUL range and engine, and examples of severe under/overestimation.
 - Optionally report the NASA asymmetric score after verifying and documenting its exact definition.
 - Discuss uncertainty, maintenance consequences, and limitations of simulated benchmark evidence.
+- Demonstrate inference for a compatible engine history and explain how the same feature logic and saved model artifacts are used by the API. Do not retrain on uploaded inference data.
 
-**Outcome:** final regression results and figures for the README. Do not use official test results to retune the model.
+**Outcome:** the final presentation notebook for the RUL study, with results and figures for the README and a clear connection to the functioning prediction API. The earlier notebooks remain the learning record. Do not use official test results to retune the model.
 
 ## 09 — Final classification evaluation
 
@@ -192,7 +205,7 @@ This is organizational work for the maintainer to carry out; editing this roadma
 - **Targets stay out of inputs:** RUL, alerts, final lifetime, and values derived from future information cannot be model features. Prediction columns used for reporting must not accidentally become features either.
 - **Evaluation unit:** the current baseline evaluates all validation cycles. Official final testing evaluates one final recorded cycle per test engine. Label these results separately; their scores are not directly comparable. If a test-like truncated validation protocol is introduced, define it before model selection and reevaluate all compared baselines/models under it. Using only training engines' failure rows would make all regression targets zero.
 - **Preprocessing and feature selection:** make learned decisions using the fitting partition only. Initial whole-training-set plots remain exploratory; they do not authorize selecting features from validation data.
-- **Common notebook layout:** purpose and inputs; assumptions and protocol; author's implementation; checks; results; interpretation and next step.
+- **Notebook presentation:** a common layout can help navigation, but the learning notebooks do not need cosmetic polishing. The final RUL notebook uses a clear structure: purpose and inputs; assumptions and protocol; author's implementation; checks; results; interpretation; inference demonstration.
 - **Reproducibility:** record seeds, versions, thresholds, units, row/engine counts, and meaningful unsuccessful experiments. Later, move repeated logic into author-written `src/` code when that is a useful learning step.
 - **Local outputs:** keep raw data and derived data exports local by default; verify redistribution permission before publishing dataset material.
 
@@ -211,7 +224,7 @@ At the maintainer's explicit request, the chosen practical delivery is a functio
 - Select the model and feature configuration using a declared validation metric and consistent evaluation protocol. Freeze these choices before official test evaluation; do not select the winner using official test scores.
 - Document the final refitting procedure, normally fitting the selected preprocessing and model on all official training engines, and save versioned artifacts. The API loads these artifacts and performs inference; uploads do not trigger retraining.
 - Reuse the same author-written feature and preprocessing definitions for training and serving. Keep windows within each engine and use only readings available by the prediction cycle.
-- Initially return one prediction per engine at its latest uploaded cycle: engine ID, cycle, predicted RUL in cycles, and model version. If alerts are included, state whether they come from a separately evaluated classifier or a documented threshold on predicted RUL; do not present the latter as a classifier probability.
+- Initially return one prediction per engine at its latest uploaded cycle: engine ID, cycle, predicted RUL in cycles, and model version. An estimated failure cycle may be reported as latest recorded cycle plus predicted RUL; this is an estimate, not an exact or guaranteed failure time. A calendar failure date is outside the cycle-based model unless an explicit usage forecast is supplied and validated. If alerts are included, state whether they come from a separately evaluated classifier or a documented threshold on predicted RUL; do not present the latter as a classifier probability.
 - Validate that API predictions match offline predictions for identical histories. Include author-owned checks for valid uploads, malformed data, insufficient history, and multiple engines, plus setup instructions and example requests/responses.
 - Present the deliverable as an end-to-end predictive-maintenance prototype validated on simulated FD001 data. Arbitrary company spreadsheets or unrelated equipment are outside its validated scope; a commercial operational system would need equipment-specific data, validation, integration, monitoring, and maintenance of the deployed model.
 
